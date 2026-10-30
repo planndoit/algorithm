@@ -22,6 +22,7 @@ export default function AdminShell({
           {[
             ["/admin/contents", "▤", "콘텐츠 관리", "문제 후보 저장소"],
             ["/admin/exposure", "◷", "문제 노출 관리", "기간별 출제 구성"],
+            ["/admin/collection", "↻", "자동 수집", "수집 설정 · 실행 기록"],
           ].map(([href, icon, label, sub]) => (
             <Link
               key={href}

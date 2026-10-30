@@ -1356,3 +1356,6 @@
 .filter-reset {
   color: #7b6c86;
 }
+.collection-evidence { margin-bottom: 24px; }
+.method-chip.auto { color: #395947; background: #edf6ef; }
+.admin-button:disabled { opacity: .55; cursor: wait; }

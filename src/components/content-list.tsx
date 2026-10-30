@@ -76,7 +76,7 @@ export default function ContentList({
               콘텐츠 목록 <span>{filtered.length}</span>
             </h2>
             <p>
-              AI가 수집한 후보도 이 목록에 쌓이고, 관리자 검토 후 출제합니다.
+              자동 수집한 후보도 이 목록에 쌓이고, 관리자 검토 후 출제합니다.
             </p>
           </div>
           <span className="sample-hint">샘플 데이터는 별도로 표시돼요</span>

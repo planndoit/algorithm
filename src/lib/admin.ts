@@ -11,6 +11,7 @@ export const platforms = [
   "TikTok",
   "YouTube",
   "Threads",
+  "Bluesky",
   "기타",
 ] as const;
 export const difficulties = ["쉬움", "보통", "어려움"] as const;
@@ -22,6 +23,7 @@ export const reviewLabels = {
 } as const;
 export const methodLabels = {
   manual: "직접 등록",
+  auto: "자동 수집",
   ai: "AI 수집",
   sample: "샘플",
 } as const;
