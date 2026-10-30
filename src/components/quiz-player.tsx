@@ -101,7 +101,11 @@ export default function QuizPlayer({ quiz }: { quiz: Quiz }) {
         >
           ← 이전
         </button>
-        <span>{quiz.id === "demo" ? "체험판" : "이번 주 알고리즘력"}</span>
+        <span>
+          {quiz.id === "demo" || quiz.is_sample
+            ? "샘플 테스트"
+            : "이번 주 알고리즘력"}
+        </span>
         <strong>
           {index + 1}
           <span className="muted"> / 10</span>
@@ -122,6 +126,11 @@ export default function QuizPlayer({ quiz }: { quiz: Quiz }) {
           QUESTION {String(index + 1).padStart(2, "0")} · {q.category}
         </span>
         <h1>이거 알아?</h1>
+        {quiz.is_sample && (
+          <p className="sample-notice">
+            기능 확인용 샘플 · 실제 트렌드가 아닙니다
+          </p>
+        )}
         <div className="question-art">
           {q.thumbnail_url && !imageFailed ? (
             <img
@@ -143,7 +152,7 @@ export default function QuizPlayer({ quiz }: { quiz: Quiz }) {
         <span className="badge">{q.platform}</span>
         <h2>{q.title}</h2>
         <p className="muted">{q.creator}</p>
-        {q.source_url && (
+        {q.source_url && !q.is_sample && (
           <a
             href={q.source_url}
             target="_blank"

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { neon } from "@neondatabase/serverless";
 import { createNeonAuth } from "@neondatabase/auth/next/server";
 export const configured = () => Boolean(process.env.DATABASE_URL);
@@ -21,7 +22,7 @@ export function auth() {
     cookies: { secret: process.env.NEON_AUTH_COOKIE_SECRET! },
   });
 }
-export async function requireAdmin() {
+export const requireAdmin = cache(async function requireAdmin() {
   if (!configured()) throw Error("Neon DB 설정이 필요합니다.");
   const { data: session, error } = await auth().getSession();
   if (error || !session?.user) throw Error("관리자 로그인이 필요합니다.");
@@ -31,4 +32,4 @@ export async function requireAdmin() {
   );
   if (!member) throw Error("관리자 권한이 없습니다.");
   return session.user;
-}
+});

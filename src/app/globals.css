@@ -805,3 +805,11 @@ select {
     transition: none !important;
   }
 }
+.sample-notice {
+  font-size: 11px;
+  color: #856226;
+  background: #fbf2dd;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}

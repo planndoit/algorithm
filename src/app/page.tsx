@@ -38,7 +38,11 @@ export default async function Home() {
           <div className="card-top">
             <span>이번 주 알고리즘력 테스트</span>
             <span className="badge">
-              {quiz?.id === "demo" ? "DEMO" : "WEEKLY"}
+              {quiz?.is_sample
+                ? "SAMPLE"
+                : quiz?.id === "demo"
+                  ? "DEMO"
+                  : "WEEKLY"}
             </span>
           </div>
           <div className="art" aria-hidden="true">
@@ -63,11 +67,13 @@ export default async function Home() {
               <Link className="button primary" href={`/quiz/${quiz.id}`}>
                 {quiz.id === "demo"
                   ? "체험 테스트 시작하기"
-                  : "내 알고리즘력 확인하기"}
+                  : quiz.is_sample
+                    ? "샘플 회차 테스트하기"
+                    : "내 알고리즘력 확인하기"}
                 <span>↗</span>
               </Link>
               <p className="fine">
-                {quiz.id === "demo"
+                {quiz.id === "demo" || quiz.is_sample
                   ? "기능 확인용 샘플 · 실제 트렌드 테스트가 아닙니다"
                   : quiz.title}
               </p>

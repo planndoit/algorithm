@@ -9,6 +9,8 @@ export type Content = {
   thumbnail_url: string;
   description: string;
   emoji?: string;
+  is_sample?: boolean;
+  account_url?: string;
 };
 export type Quiz = {
   id: string;
@@ -16,6 +18,7 @@ export type Quiz = {
   starts_at: string;
   ends_at: string;
   questions: Content[];
+  is_sample?: boolean;
 };
 export const submission = z.object({
   quizId: z.string().min(1),

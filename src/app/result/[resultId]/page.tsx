@@ -17,11 +17,13 @@ export async function generateMetadata({
   const result = await getResult(resultId);
   if (!result) return {};
   const type = outcome(result.score);
+  const quiz = await getQuiz(result.quiz_id);
+  const prefix = quiz?.is_sample ? "[샘플] " : "";
   return {
-    title: `${result.score}점 · ${type.title}`,
+    title: `${prefix}${result.score}점 · ${type.title}`,
     description: type.description,
     openGraph: {
-      title: `나의 알고리즘력 ${result.score}점 · ${type.title}`,
+      title: `${prefix}나의 알고리즘력 ${result.score}점 · ${type.title}`,
       description: type.description,
       images: [`/result/${resultId}/opengraph-image`],
     },

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth, query, requireAdmin } from "@/lib/db";
 import { z } from "zod";
+import { contentSchema, parseKst } from "@/lib/admin";
 export async function login(form: FormData) {
   const client = auth();
   const { error } = await client.signIn.email({
@@ -16,115 +17,121 @@ export async function logout() {
   await auth().signOut();
   redirect("/admin");
 }
-const safeUrl = z.union([
-  z.literal(""),
-  z
-    .url()
-    .refine((s) => new URL(s).protocol === "https:", "HTTPS URL을 입력하세요."),
-]);
-const contentSchema = z.object({
-  title: z.string().min(1).max(200),
-  category: z.enum(["인물", "밈", "유행어", "챌린지", "화제 콘텐츠"]),
-  platform: z.enum(["Instagram", "TikTok", "YouTube", "Threads", "기타"]),
-  creator: z.string().max(200),
-  source_url: z.url().refine((s) => new URL(s).protocol === "https:"),
-  video_url: safeUrl,
-  thumbnail_url: safeUrl,
-  description: z.string().max(1000),
-  discovered_at: z.iso.date(),
-  trending_at: z.union([z.literal(""), z.iso.date()]),
-  metrics: z.string().max(500),
-  difficulty: z.enum(["쉬움", "보통", "어려움"]),
-  status: z.enum(["pending", "approved", "excluded", "inactive"]),
-  admin_notes: z.string().max(2000),
-});
 export async function saveContent(form: FormData) {
   await requireAdmin();
+  const id = String(form.get("id") || "");
+  const validId = !id || z.uuid().safeParse(id).success;
+  const target =
+    validId && id ? `/admin/contents/${id}` : "/admin/contents/new";
   const parsed = contentSchema.safeParse(Object.fromEntries(form));
-  if (!parsed.success) redirect("/admin?error=validation");
+  if (!parsed.success || !validId) redirect(`${target}?error=validation`);
   const values = {
     ...parsed.data,
     trending_at: parsed.data.trending_at || null,
   };
-  const id = String(form.get("id") || "");
   try {
     const fields = Object.keys(values);
-    const params = Object.values(values);
+    const parameters = Object.values(values);
     if (id) {
       await query(
         `update public.contents set ${fields.map((key, i) => `"${key}"=$${i + 1}`).join(",")} where id=$${fields.length + 1}`,
-        [...params, id],
+        [...parameters, id],
       );
     } else {
       await query(
         `insert into public.contents (${fields.map((key) => `"${key}"`).join(",")}) values (${fields.map((_, i) => `$${i + 1}`).join(",")})`,
-        params,
+        parameters,
       );
     }
   } catch {
-    redirect("/admin?error=content");
+    redirect(`${target}?error=content`);
   }
-  revalidatePath("/admin");
-  redirect("/admin");
+  revalidatePath("/admin/contents");
+  revalidatePath("/admin/exposure");
+  redirect("/admin/contents?saved=1");
 }
-export async function removeContent(form: FormData) {
+export async function setContentStatus(form: FormData) {
   await requireAdmin();
+  const id = z.uuid().safeParse(form.get("id"));
+  const status = z
+    .enum(["pending", "approved", "excluded", "inactive"])
+    .safeParse(form.get("status"));
+  if (!id.success || !status.success)
+    redirect("/admin/contents?error=validation");
   try {
-    await query("update public.contents set status='inactive' where id=$1", [
-      String(form.get("id")),
+    await query("update public.contents set status=$1 where id=$2", [
+      status.data,
+      id.data,
     ]);
   } catch {
-    redirect("/admin?error=content");
+    redirect("/admin/contents?error=content");
   }
-  revalidatePath("/admin");
+  revalidatePath("/admin/contents");
+  revalidatePath("/admin/exposure");
+  redirect("/admin/contents?saved=1");
 }
 export async function saveQuiz(form: FormData) {
   await requireAdmin();
+  const id = String(form.get("id") || "");
+  const validId = !id || z.uuid().safeParse(id).success;
+  const target =
+    validId && id ? `/admin/exposure/${id}` : "/admin/exposure/new";
   const ids = String(form.get("ordered_ids") || "")
-    .split(/[\s,]+/)
+    .split(",")
+    .map((s) => s.trim())
     .filter(Boolean);
   const title = String(form.get("title") || "").trim();
-  const starts = new Date(String(form.get("starts_at")));
-  const ends = new Date(String(form.get("ends_at")));
   if (
+    !validId ||
     !title ||
     title.length > 200 ||
-    !Number.isFinite(+starts) ||
-    !Number.isFinite(+ends) ||
-    starts >= ends ||
-    new Set(ids).size !== ids.length ||
-    ids.length > 10
+    !z.array(z.uuid()).max(10).safeParse(ids).success ||
+    new Set(ids).size !== ids.length
   )
-    redirect("/admin?error=validation");
+    redirect(`${target}?error=validation`);
+  let start: string, end: string;
   try {
-    await query(
-      "select public.save_quiz($1::uuid,$2,$3::timestamptz,$4::timestamptz,$5::uuid[])",
-      [
-        form.get("id") || null,
-        title,
-        starts.toISOString(),
-        ends.toISOString(),
-        ids,
-      ],
-    );
+    start = parseKst(String(form.get("starts_at")));
+    end = parseKst(String(form.get("ends_at")));
+    if (start >= end) throw Error();
   } catch {
-    redirect("/admin?error=quiz");
+    redirect(`${target}?error=validation`);
   }
-  revalidatePath("/admin");
-  redirect("/admin");
+  let savedId: string;
+  try {
+    const [saved] = await query<{ id: string }>(
+      "select public.save_quiz($1::uuid,$2,$3::timestamptz,$4::timestamptz,$5::uuid[]) id",
+      [id || null, title, start, end, ids],
+    );
+    savedId = saved.id;
+  } catch {
+    redirect(`${target}?error=quiz`);
+  }
+  revalidatePath("/admin/exposure");
+  revalidatePath("/admin/contents");
+  redirect(`/admin/exposure/${savedId}?saved=1`);
 }
 export async function changeQuiz(form: FormData) {
   await requireAdmin();
-  const status = String(form.get("status"));
-  if (!["published", "ended"].includes(status)) return;
+  const id = z.uuid().safeParse(form.get("id"));
+  const status = z.enum(["published", "ended"]).safeParse(form.get("status"));
+  if (!id.success || !status.success)
+    redirect("/admin/exposure?error=validation");
+  const target = `/admin/exposure/${id.data}`;
   try {
-    await query("update public.quiz_sets set status=$1 where id=$2", [
-      status,
-      String(form.get("id")),
-    ]);
+    const changed = await query(
+      "update public.quiz_sets set status=$1 where id=$2 and status=$3 returning id",
+      [
+        status.data,
+        id.data,
+        status.data === "published" ? "draft" : "published",
+      ],
+    );
+    if (!changed.length) throw Error();
   } catch {
-    redirect("/admin?error=publish");
+    redirect(`${target}?error=publish`);
   }
   revalidatePath("/");
-  revalidatePath("/admin");
+  revalidatePath("/admin/exposure");
+  redirect("/admin/exposure?saved=1");
 }

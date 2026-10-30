@@ -15,7 +15,9 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:db": "node --import tsx --test tests/database.test.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:admin-ui": "node scripts/admin-ui-qa.mjs",
+    "prebuild": "node scripts/assert-no-qa-route.mjs"
   },
   "repository": {
     "type": "git",

@@ -10,8 +10,8 @@ Next.js App Router · TypeScript · Tailwind CSS · Neon PostgreSQL · Neon Auth
 - 데이터베이스: `algorithm`
 - 리전: AWS Singapore (`aws-ap-southeast-1`), PostgreSQL 17
 - 무료 조직의 기본 compute 설정을 사용합니다. 유료 플랜 변경 없음.
-- 스키마 `database/migrations/001_neon_initial.sql` 적용 완료.
-- 콘텐츠/회차/결과는 비어 있습니다. 실제 트렌드를 임의 생성하지 않았습니다.
+- 스키마 `database/migrations/001_neon_initial.sql`, `002_admin_workflow.sql` 적용 완료.
+- 관리자 테스트를 위해 명시적 샘플 콘텐츠 14개와 회차 3개를 제공합니다. 실제 트렌드 데이터가 아닙니다.
 
 ## 로컬 실행
 
@@ -81,3 +81,13 @@ Phase 2 통계/이벤트 분석, Phase 3 AI 수집, Phase 4 광고/결제는 후
 ## 테스트용 접속 준비
 
 Vercel 운영 도메인은 `https://algorithm-zeta-three.vercel.app`로 배정되어 있습니다. 아직 실제 배포 상태는 `docs/DEPLOYMENT.md`에서 확인하세요. 홈에 실제 회차가 없으면 별도의 명시적 샘플 체험 링크를 제공합니다. 운영 DB에는 샘플 콘텐츠를 자동 등록하지 않습니다. 관리자 비밀번호 설정은 `/admin/password`, 로그인과 운영은 `/admin`입니다.
+
+## 관리자 콘텐츠 · 노출 관리 개편
+
+- `/admin/contents`: 문제 후보 목록, 제목/크리에이터 검색, 유형/검토 상태 필터, 상세·수정 및 승인. 계정 URL과 실제 알고리즘 콘텐츠 URL을 별도로 저장합니다.
+- `/admin/contents/new`: 요청된 제목, 크리에이터, 계정 URL, 콘텐츠 URL, 발견일, 유행 시작일, 유형, 플랫폼, 난이도, 설명, 내부 메모를 등록합니다. 검토 상태와 선택적 대표 이미지도 관리합니다.
+- `/admin/exposure`: 노출 중·예약·초안·종료 회차를 구분합니다. 승인된 문제를 클릭으로 담고, 위/아래 버튼으로 순서를 바꿉니다. 한국 시간으로 기간을 정하고 초안 저장 후 미리보기에서 발행합니다.
+- 데이터에 `collection_method` (manual / ai / sample)를 두어 나중에 AI가 수집한 문제도 같은 검토 대기 목록에 적재할 수 있습니다. AI 수집 자체는 아직 실행하지 않습니다.
+- 변경 스키마는 `002_admin_workflow.sql`입니다. 모든 DB 변경은 독립 검증 브랜치와 PGlite에서 먼저 확인했습니다.
+- 사용자 요청에 따른 명시적 샘플은 `database/seeds/admin_samples.sql`입니다. 승인 10개/대기 3개/제외 1개와 노출 중 10문제/예약 10문제/초안 6문제 회차를 생성합니다. 재실행해도 중복되지 않습니다. 실제 트렌드 정보가 아니며 화면·공유 결과에 샘플임을 표시합니다.
+- `npm run test:admin-ui`: 실제 인증을 우회하지 않는 독립 컴포넌트 fixture로 목록·등록 폼·선택·순서·모바일 화면을 검증합니다. 개발 서버에서만 잠시 쓰는 fixture 경로는 테스트 종료 시 제거하며, 프로덕션 빌드 전에도 남아 있지 않은지 확인합니다. 기본 포트 3013, `ADMIN_QA_PORT`로 변경 가능.

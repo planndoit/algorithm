@@ -26,7 +26,7 @@ export default function ResultCard({
       }
       const url = new URL(location.href);
       url.searchParams.set("ref", "share");
-      const text = `나 이번 주 알고리즘력 ${score}점 나왔어ㅋㅋ 너는 몇 점?`;
+      const text = `${quiz.is_sample ? "[샘플 회차] " : ""}나 이번 주 알고리즘력 ${score}점 나왔어ㅋㅋ 너는 몇 점?`;
       if (native && navigator.share)
         await navigator.share({
           title: "이번 주 알고리즘력 테스트",
@@ -45,7 +45,11 @@ export default function ResultCard({
   return (
     <main className="narrow result">
       <span className="pill">
-        {isDemo ? "DEMO RESULT · 체험 결과" : "YOUR ALGORITHM REPORT"}
+        {isDemo
+          ? "DEMO RESULT · 체험 결과"
+          : quiz.is_sample
+            ? "SAMPLE RESULT · 샘플 회차 결과"
+            : "YOUR ALGORITHM REPORT"}
       </span>
       <section className="score-card">
         <span className="eyebrow">이번 주 나의 알고리즘력</span>
@@ -84,7 +88,7 @@ export default function ResultCard({
               <div>
                 <strong>{q.title}</strong>
                 <p>{q.description}</p>
-                {q.source_url && (
+                {q.source_url && !q.is_sample && (
                   <a
                     href={q.source_url}
                     target="_blank"

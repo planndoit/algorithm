@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
-import { getResult } from "@/lib/data";
+import { getResult, getQuiz } from "@/lib/data";
 import { outcome } from "@/lib/model";
 export const alt = "이번 주 알고리즘력 테스트 결과";
 export const size = { width: 1200, height: 630 };
@@ -14,6 +14,7 @@ export default async function Image({
   const { resultId } = await params;
   const r = await getResult(resultId);
   const score = r?.score;
+  const quiz = r ? await getQuiz(r.quiz_id) : null;
   const type = score === undefined ? null : outcome(score);
   return new ImageResponse(
     <div
@@ -29,7 +30,11 @@ export default async function Image({
         fontFamily: "Noto",
       }}
     >
-      <div style={{ fontSize: 30 }}>이번 주 알고리즘력 테스트</div>
+      <div style={{ fontSize: 30 }}>
+        {quiz?.is_sample
+          ? "샘플 회차 · 알고리즘력 테스트"
+          : "이번 주 알고리즘력 테스트"}
+      </div>
       <div style={{ fontSize: 140, fontWeight: 900 }}>
         {score === undefined ? "WEEKLY" : `${score} / 100`}
       </div>

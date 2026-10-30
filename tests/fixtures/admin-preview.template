@@ -1,0 +1,35 @@
+// Temporary local fixture route. Removed before production build and never committed.
+import { notFound } from "next/navigation";
+import AdminShell from "@/components/admin-shell";
+import ContentList from "@/components/content-list";
+import ContentForm from "@/components/content-form";
+import ExposureList from "@/components/exposure-list";
+import QuizEditor from "@/components/quiz-editor";
+import { fixtureContents, fixtureQuizzes } from "../../../tests/fixtures/admin";
+import "../admin/admin.css";
+export const dynamic = "force-dynamic";
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ screen?: string }>;
+}) {
+  if (
+    process.env.NODE_ENV !== "development" ||
+    process.env.ADMIN_UI_QA !== "true"
+  )
+    notFound();
+  const { screen } = await searchParams;
+  return (
+    <AdminShell>
+      {screen === "editor" ? (
+        <QuizEditor contents={fixtureContents} initial={fixtureQuizzes[2]} />
+      ) : screen === "exposure" ? (
+        <ExposureList quizzes={fixtureQuizzes} search={{}} />
+      ) : screen === "content" ? (
+        <ContentForm content={fixtureContents[0]} />
+      ) : (
+        <ContentList contents={fixtureContents} search={{}} />
+      )}
+    </AdminShell>
+  );
+}
