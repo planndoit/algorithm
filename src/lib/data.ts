@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import "server-only";
 import { z } from "zod";
 import { query, configured, demo, requireAdmin } from "./db";
@@ -39,13 +40,21 @@ export async function getResult(id: string) {
   return result ?? null;
 }
 export async function adminContents() {
-  await requireAdmin();
+  try {
+    await requireAdmin();
+  } catch {
+    redirect("/admin");
+  }
   return query<import("./admin").AdminContent>(
     `select c.id,c.title,c.creator,c.account_url,c.source_url,c.discovered_at::text,coalesce(c.trending_at::text,'') trending_at,c.category,c.platform,c.difficulty,c.description,c.admin_notes,c.status,c.thumbnail_url,c.collection_method,(select count(*)::int from public.quiz_questions q where q.content_id=c.id) use_count from public.contents c order by c.created_at desc,c.id`,
   );
 }
 export async function adminQuizzes(id?: string) {
-  await requireAdmin();
+  try {
+    await requireAdmin();
+  } catch {
+    redirect("/admin");
+  }
   return query<import("./admin").AdminQuiz>(
     `select s.id,s.title,s.status,s.locked,s.is_sample,s.starts_at::text,s.ends_at::text,coalesce((select jsonb_agg(jsonb_build_object('content_id',q.content_id,'position',q.position,'snapshot',q.snapshot) order by q.position) from public.quiz_questions q where q.quiz_id=s.id),'[]'::jsonb) quiz_questions from public.quiz_sets s ${id ? "where s.id=$1" : ""} order by case when s.status='published' and s.starts_at<=now() and s.ends_at>now() then 0 when s.status='published' and s.starts_at>now() then 1 when s.status='draft' then 2 else 3 end,s.starts_at desc`,
     id ? [id] : [],
