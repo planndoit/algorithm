@@ -4,11 +4,22 @@ export const collectionSettingsSchema = z.object({
   keywords: z.array(z.string().trim().min(1).max(30)).min(1).max(8),
   daily_limit: z.coerce.number().int().min(1).max(50),
   bluesky_min_engagement: z.coerce.number().int().min(1).max(10000),
+  instagram_hashtags: z
+    .array(z.string().regex(/^[\p{L}\p{N}_]{1,30}$/u))
+    .min(1)
+    .max(8)
+    .default(["밈", "릴스", "챌린지"]),
+  instagram_min_likes: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(10000000)
+    .default(100),
   youtube_min_views: z.coerce.number().int().min(100).max(100000000),
 });
 export type Settings = z.infer<typeof collectionSettingsSchema>;
 export type Candidate = {
-  provider: "bluesky" | "youtube";
+  provider: "bluesky" | "youtube" | "instagram";
   external_id: string;
   title: string;
   creator: string;

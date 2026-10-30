@@ -105,3 +105,16 @@ Vercel 운영 도메인은 `https://algorithm-zeta-three.vercel.app`로 배정�
 - 일부 소스만 실패하면 정상 소스 후보를 저장하고 `partial`로 기록합니다. 모든 소스 실패와 정상 0개 수집은 구분합니다. 한 소스의 키워드 요청이 실패하면 해당 소스 전체를 실패로 기록합니다. 429/5xx/연결 실패는 1회 제한 재시도합니다.
 - 수집기 검증: `npm test`에서 실제 PostgreSQL 호환 엔진으로 한도·중복·관리자 편집 보존·lease 복구·권한을 확인하고, 제공자 fixture로 최신성/반응/한국어 필터를 확인합니다.
 - 필요 시 최초 운영 배포만 build command 뒤에 `node --conditions=react-server --import tsx scripts/collect-initial.ts`를 붙여 실제 수집을 검증할 수 있습니다. 일반 build에는 포함되지 않으며, 고정 프로젝트/production 확인과 실행 간격/lease 보호가 적용됩니다.
+
+### Instagram 공식 수집 연결
+
+관리자 `/admin/collection#instagram`에 Meta 연결 안내와 계정/공개 콘텐츠 조회 권한 확인 버튼을 제공합니다. 인증 정보가 없으면 미연결이며, 성공한 실제 API 검증만 최근 확인 기록으로 표시합니다.
+
+1. Meta 앱의 **Instagram API with Facebook Login**을 사용합니다. Facebook 페이지에 연결된 Instagram 비즈니스/크리에이터 계정이 필요합니다. Instagram Login 전용 토큰으로 이 해시태그 API를 사용할 수 없습니다.
+2. Meta 앱에서 `instagram_basic`, `pages_read_engagement` 및 계정 탐색용 `pages_show_list`를 승인하고, 앱 역할/접근 수준에 맞는 **Instagram Public Content Access** 기능 승인을 확인합니다. 실제 서비스 접근에는 Meta App Review/사업자 검증 등이 추가로 필요할 수 있습니다.
+3. Graph API Explorer의 `me/accounts?fields=id,name,instagram_business_account`에서 **instagram_business_account.id** 확인. 장기 User 액세스 토큰을 발급해 Vercel Production의 `INSTAGRAM_ACCESS_TOKEN`(Secret), `INSTAGRAM_BUSINESS_ACCOUNT_ID`에 등록하고 재배포합니다. 기본 API 버전 v26.0, `META_GRAPH_API_VERSION`으로 명시 변경 가능. 토큰은 채팅/DB 메모/클라이언트에 넣지 않습니다.
+4. 관리자에서 해시태그(기본 밈/릴스/챌린지), 최소 좋아요(기본100)를 설정하고 ‘Instagram 연결 확인’ → ‘지금 수집하기’를 실행합니다. 일일 기존 cron에도 자동 포함됩니다. 토큰은 만료 전에 갱신해야 하며 만료·권한·한도 오류를 실행 기록에 구분해 표시합니다.
+
+고정 `graph.facebook.com` origin에만 bearer 인증을 보내며, `ig_hashtag_search` → `/{id}/top_media` 첫 페이지(태그당 최대50개)를 조회합니다. 최근7일 한국어·공개 좋아요 조건을 통과한 후보만 저장하고, 작성자/계정 URL·조회수는 API 미제공 시 추정하지 않습니다. 계정당 최근7일 고유 해시태그30개 제한을 앱 DB에서도 예약 관리합니다(다른 앱의 사용량은 Meta 판정 우선). 이미지·영상 파일은 다운로드하지 않고 원문 permalink와 텍스트/반응 지표만 저장합니다. 관리자 승인·회차 편성 흐름을 유지합니다.
+
+참조: [Meta Hashtag Search](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-facebook-login/hashtag-search/), [Meta top_media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-hashtag/top-media/).

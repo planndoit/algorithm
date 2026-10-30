@@ -4,6 +4,7 @@ import { query, requireAdmin } from "@/lib/db";
 import { type Settings, type SourceResult } from "@/lib/collection/model";
 import { formatKst } from "@/lib/admin";
 import { PageHeading, Notice } from "@/components/admin-common";
+import InstagramConnection from "@/components/instagram-connection";
 import CollectButton from "@/components/collect-button";
 import { saveSettings, collectNow } from "./actions";
 export const maxDuration = 180;
@@ -149,6 +150,32 @@ export default async function Page({
                 defaultValue={settings.youtube_min_views}
               />
             </label>
+            <label>
+              Instagram 탐색 해시태그
+              <textarea
+                name="instagram_hashtags"
+                rows={2}
+                required
+                maxLength={247}
+                defaultValue={settings.instagram_hashtags.join(", ")}
+              />
+            </label>
+            <p className="field-note">
+              쉼표로 구분해 최대 8개. 공백 없이 입력하세요. Meta는 계정당 최근
+              7일간 고유 해시태그를 30개까지 허용합니다. 다른 앱의 사용량도
+              영향을 줍니다.
+            </p>
+            <label>
+              Instagram 최소 좋아요
+              <input
+                type="number"
+                name="instagram_min_likes"
+                min={1}
+                max={10000000}
+                required
+                defaultValue={settings.instagram_min_likes}
+              />
+            </label>
             <button className="admin-button primary">설정 저장</button>
           </form>
         </section>
@@ -182,7 +209,13 @@ export default async function Page({
                   메모에 입력하지 마세요.
                 </p>
               )}
-              <h3>Instagram · TikTok</h3>
+              <h3>Instagram · 공식 해시태그 API</h3>
+              <p>
+                아래 Instagram 연결에서 인증 상태를 확인하세요. 지정한
+                해시태그의 인기 게시물 중 최근 7일·한국어·최소 좋아요 조건을
+                통과한 후보를 저장합니다.
+              </p>
+              <h3>TikTok</h3>
               <p>
                 미연결. 전체 인기 피드에 대한 공식 API 접근이 제한되어 현재
                 수집하지 않습니다.
@@ -196,6 +229,7 @@ export default async function Page({
           </section>
         </aside>
       </div>
+      <InstagramConnection />
       <section className="library-panel">
         <div className="panel-heading">
           <div>

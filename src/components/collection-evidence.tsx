@@ -29,7 +29,11 @@ export default async function CollectionEvidence({ id }: { id: string }) {
         <div>
           <h2>
             자동 수집 근거 ·{" "}
-            {evidence.provider === "youtube" ? "YouTube" : "Bluesky"}
+            {evidence.provider === "youtube"
+              ? "YouTube"
+              : evidence.provider === "instagram"
+                ? "Instagram"
+                : "Bluesky"}
           </h2>
           <p>{evidence.reason}</p>
         </div>

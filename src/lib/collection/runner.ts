@@ -8,6 +8,8 @@ import {
   kstDay,
 } from "./model";
 import { collectBluesky, collectYoutube } from "./sources";
+import { instagramConfig, InstagramError } from "./instagram";
+import { instagramSource } from "./instagram-server";
 export async function runCollection(trigger: "cron" | "manual") {
   const now = new Date();
   const [claimed] = await query<{ id: string | null }>(
@@ -22,7 +24,7 @@ export async function runCollection(trigger: "cron" | "manual") {
   const results: SourceResult[] = [];
   try {
     const [settings] = await query<Settings>(
-      "select enabled,keywords,daily_limit,bluesky_min_engagement,youtube_min_views from public.collection_settings where id=true",
+      "select enabled,keywords,daily_limit,bluesky_min_engagement,youtube_min_views,instagram_hashtags,instagram_min_likes from public.collection_settings where id=true",
     );
     if (!settings?.enabled) {
       await query(
@@ -33,6 +35,9 @@ export async function runCollection(trigger: "cron" | "manual") {
     }
     const sources = [
       { name: "Bluesky", run: () => collectBluesky(settings, now) },
+      ...(instagramConfig(process.env)
+        ? [{ name: "Instagram", run: () => instagramSource(settings, now) }]
+        : []),
       ...(process.env.YOUTUBE_API_KEY
         ? [
             {
@@ -50,6 +55,13 @@ export async function runCollection(trigger: "cron" | "manual") {
         found: 0,
         message: "YouTube Data API 키를 연결하면 수집이 시작됩니다.",
       });
+    if (!instagramConfig(process.env))
+      results.push({
+        source: "Instagram",
+        status: "unconfigured",
+        found: 0,
+        message: "Meta 인증 정보 연결이 필요합니다.",
+      });
     const batches = await Promise.all(
       sources.map(async (source) => {
         try {
@@ -63,10 +75,12 @@ export async function runCollection(trigger: "cron" | "manual") {
           return items;
         } catch (error) {
           const message =
-            error instanceof Error &&
-            /^제공자 응답 HTTP \d{3}$/.test(error.message)
+            error instanceof InstagramError
               ? error.message
-              : "제공자 연결 또는 응답 검증 실패";
+              : error instanceof Error &&
+                  /^제공자 응답 HTTP \d{3}$/.test(error.message)
+                ? error.message
+                : "제공자 연결 또는 응답 검증 실패";
           results.push({
             source: source.name,
             status: "error",
