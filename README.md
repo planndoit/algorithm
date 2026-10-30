@@ -104,4 +104,4 @@ Vercel 운영 도메인은 `https://algorithm-zeta-three.vercel.app`로 배정�
 - DB lease로 중복 실행과 10분 이내 재실행을 방지하고, 일일 cron key로 같은 날 중복 호출을 차단합니다. 10분 이상 중단된 실행은 다음 실행에서 실패로 마감하고 복구합니다. 하루 신규 한도는 한국 날짜 기준, 수동 실행과 합산합니다.
 - 일부 소스만 실패하면 정상 소스 후보를 저장하고 `partial`로 기록합니다. 모든 소스 실패와 정상 0개 수집은 구분합니다. 한 소스의 키워드 요청이 실패하면 해당 소스 전체를 실패로 기록합니다. 429/5xx/연결 실패는 1회 제한 재시도합니다.
 - 수집기 검증: `npm test`에서 실제 PostgreSQL 호환 엔진으로 한도·중복·관리자 편집 보존·lease 복구·권한을 확인하고, 제공자 fixture로 최신성/반응/한국어 필터를 확인합니다.
-- 필요 시 최초 운영 배포만 build command 뒤에 `node --conditions=react-server --import tsx scripts/collect-initial.ts`를 붙여 실제 수집을 검증할 수 있습니다. 일반 build에는 포함되지 않으며, 고정 프로젝트/production 확인과 당일 cron key 보호가 적용됩니다.
+- 필요 시 최초 운영 배포만 build command 뒤에 `node --conditions=react-server --import tsx scripts/collect-initial.ts`를 붙여 실제 수집을 검증할 수 있습니다. 일반 build에는 포함되지 않으며, 고정 프로젝트/production 확인과 실행 간격/lease 보호가 적용됩니다.

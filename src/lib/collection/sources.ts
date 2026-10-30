@@ -124,7 +124,7 @@ export async function collectBluesky(settings: Settings, now: Date) {
   const batches = await Promise.all(
     settings.keywords.map(async (keyword) => {
       const url = new URL(
-        "https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts",
+        "https://api.bsky.app/xrpc/app.bsky.feed.searchPosts",
       );
       url.search = new URLSearchParams({
         q: keyword,
