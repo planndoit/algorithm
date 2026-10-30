@@ -7,6 +7,7 @@ export default async function Page({
     q?: string;
     status?: string;
     category?: string;
+    method?: string;
     error?: string;
     saved?: string;
   }>;

@@ -45,7 +45,7 @@ export default async function Page({
   ]);
   const search = await searchParams;
   const messages: Record<string, string> = {
-    busy: "이미 실행했거나 수집 중입니다. 실행 간격은 최소 10분입니다.",
+    busy: "이미 실행했거나 수집 중입니다. 완료 후 10분, 실패 후 1분이 지나면 다시 실행할 수 있습니다.",
     succeeded:
       "수집을 완료했습니다. 새 후보는 콘텐츠 관리의 검토 대기에 추가했습니다.",
     partial:
@@ -75,7 +75,9 @@ export default async function Page({
           className={`feedback ${["failed", "partial"].includes(search.result) ? "error" : "success"}`}
         >
           {messages[search.result] || "실행 기록을 확인해 주세요."}{" "}
-          <Link href="/admin/contents?status=pending">검토 대기 보기 →</Link>
+          <Link href="/admin/contents?status=pending&method=auto">
+            검토 대기 보기 →
+          </Link>
         </div>
       )}
       <div className="editor-grid">

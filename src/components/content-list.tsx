@@ -16,6 +16,7 @@ export default function ContentList({
     q?: string;
     status?: string;
     category?: string;
+    method?: string;
     error?: string;
     saved?: string;
   };
@@ -27,7 +28,8 @@ export default function ContentList({
           .toLowerCase()
           .includes(search.q.toLowerCase())) &&
       (!search.status || c.status === search.status) &&
-      (!search.category || c.category === search.category),
+      (!search.category || c.category === search.category) &&
+      (!search.method || c.collection_method === search.method),
   );
   return (
     <>
@@ -104,6 +106,17 @@ export default function ContentList({
             <select name="status" defaultValue={search.status || ""}>
               <option value="">모든 검토 상태</option>
               {Object.entries(reviewLabels).map(([key, label]) => (
+                <option key={key} value={key}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span className="sr-only">등록 경로 필터</span>
+            <select name="method" defaultValue={search.method || ""}>
+              <option value="">모든 등록 경로</option>
+              {Object.entries(methodLabels).map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
                 </option>

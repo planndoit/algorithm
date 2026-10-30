@@ -153,6 +153,14 @@ test("collection transactions: single lease, daily budget, preserve edits and ex
       ).rows[0].status,
       "failed",
     );
+    await db.exec(
+      "update collection_runs set status='failed',started_at=now() where status='running'",
+    );
+    assert.equal(await claim("retry-too-soon"), null);
+    await db.exec(
+      "update collection_runs set started_at=now()-interval '2 minutes' where run_key='recovered'",
+    );
+    assert.ok(await claim("retry-after-provider-failure"));
     await db.exec("create role collector_public;set role collector_public");
     await assert.rejects(
       () => db.query("select * from collection_runs"),
