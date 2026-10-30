@@ -118,3 +118,9 @@ Vercel 운영 도메인은 `https://algorithm-zeta-three.vercel.app`로 배정�
 고정 `graph.facebook.com` origin에만 bearer 인증을 보내며, `ig_hashtag_search` → `/{id}/top_media` 첫 페이지(태그당 최대50개)를 조회합니다. 최근7일 한국어·공개 좋아요 조건을 통과한 후보만 저장하고, 작성자/계정 URL·조회수는 API 미제공 시 추정하지 않습니다. 계정당 최근7일 고유 해시태그30개 제한을 앱 DB에서도 예약 관리합니다(다른 앱의 사용량은 Meta 판정 우선). 이미지·영상 파일은 다운로드하지 않고 원문 permalink와 텍스트/반응 지표만 저장합니다. 관리자 승인·회차 편성 흐름을 유지합니다.
 
 참조: [Meta Hashtag Search](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-facebook-login/hashtag-search/), [Meta top_media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-hashtag/top-media/).
+
+### 현재 운영 범위: Instagram만 (2026-10-30)
+
+사용자 요청에 따라 자동/관리자 수동 수집 모두 Instagram만 실행합니다. 다른 플랫폼의 인증키가 존재해도 Bluesky/YouTube/TikTok은 호출하지 않습니다. 관리자에서는 Instagram 해시태그·최소 좋아요·하루 한도만 설정하며, 일반 탐색 키워드/다른 플랫폼 기준은 사용하지 않습니다. 기존 수집 기록과 후보는 보존합니다.
+
+Instagram 미인증이면 실행을 건너뛰고 인증 대기 사유를 기록합니다. 현재 후보 발견은 해시태그 top_media, 선별은 최근7일·한국어·최소 좋아요, 정렬은 시간당 좋아요입니다. 댓글은 저장만 하고 아직 정렬 가중치나 증가 속도 점수에 반영하지 않습니다. 타인의 공개 후보 수집에 연결 계정 본인의 상세 Insights 권한을 그대로 적용할 수 있다고 가정하지 않습니다.

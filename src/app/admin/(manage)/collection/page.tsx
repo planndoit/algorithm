@@ -5,6 +5,7 @@ import { type Settings, type SourceResult } from "@/lib/collection/model";
 import { formatKst } from "@/lib/admin";
 import { PageHeading, Notice } from "@/components/admin-common";
 import InstagramConnection from "@/components/instagram-connection";
+import { instagramConfig } from "@/lib/collection/instagram";
 import CollectButton from "@/components/collect-button";
 import { saveSettings, collectNow } from "./actions";
 export const maxDuration = 180;
@@ -26,7 +27,7 @@ const labels: Record<string, string> = {
   succeeded: "완료",
   partial: "일부 소스 실패",
   failed: "실패",
-  skipped: "일시정지",
+  skipped: "실행 안 함",
 };
 export default async function Page({
   searchParams,
@@ -52,7 +53,8 @@ export default async function Page({
     partial:
       "가능한 소스의 후보를 저장했습니다. 실패한 소스는 실행 기록을 확인해 주세요.",
     failed: "수집에 실패했습니다. 소스별 기록을 확인하고 다시 실행해 주세요.",
-    skipped: "수집이 일시정지되어 있습니다. 설정에서 다시 켜주세요.",
+    skipped:
+      "수집을 실행하지 않았습니다. 자동 수집 설정과 Instagram 인증 상태를 확인해 주세요.",
   };
   return (
     <>
@@ -62,7 +64,9 @@ export default async function Page({
         description="인기 후보를 발견하고, 관리자가 검토할 수 있도록 저장합니다."
         action={
           <form action={collectNow}>
-            <CollectButton disabled={!settings.enabled} />
+            <CollectButton
+              disabled={!settings.enabled || !instagramConfig(process.env)}
+            />
           </form>
         }
       />
@@ -104,20 +108,6 @@ export default async function Page({
               </span>
             </label>
             <label>
-              탐색 키워드
-              <textarea
-                name="keywords"
-                rows={3}
-                defaultValue={settings.keywords.join(", ")}
-                required
-                maxLength={247}
-              />
-            </label>
-            <p className="field-note">
-              쉼표로 구분해 최대 8개, 각 30자까지 입력하세요. 한국어 밈·유행
-              후보를 찾습니다.
-            </p>
-            <label>
               하루 신규 등록 한도
               <input
                 type="number"
@@ -126,28 +116,6 @@ export default async function Page({
                 max={50}
                 required
                 defaultValue={settings.daily_limit}
-              />
-            </label>
-            <label>
-              Bluesky 최소 반응 점수
-              <input
-                type="number"
-                name="bluesky_min_engagement"
-                min={1}
-                max={10000}
-                required
-                defaultValue={settings.bluesky_min_engagement}
-              />
-            </label>
-            <label>
-              YouTube 최소 조회수
-              <input
-                type="number"
-                name="youtube_min_views"
-                min={100}
-                max={100000000}
-                required
-                defaultValue={settings.youtube_min_views}
               />
             </label>
             <label>
@@ -185,40 +153,28 @@ export default async function Page({
               <h2>수집 소스</h2>
             </div>
             <div className="form-body">
-              <h3>Bluesky · 공개 API</h3>
+              <h3>Instagram만 수집합니다</h3>
               <p>
-                최근 7일 한국어 키워드 검색에서 반응 점수(좋아요 + 공유×2 +
-                댓글)를 통과한 게시물. 시간당 반응으로 정렬합니다. 인증키 없이
-                요청하며 실제 연결 상태는 아래 실행 기록에 표시됩니다.
+                Bluesky·YouTube·TikTok 수집은 꺼져 있습니다. Instagram도 Meta
+                인증 완료 후에만 실행됩니다.
               </p>
-              <h3>
-                YouTube ·{" "}
-                {process.env.YOUTUBE_API_KEY
-                  ? "API 연결 설정됨"
-                  : "API 키 연결 필요"}
-              </h3>
+              <h3>1. 후보 발견 · 해시태그</h3>
               <p>
-                최근 7일 키워드 검색의 4분 미만 영상 중 조회수 조건을 통과한
-                후보. 시간당 조회수로 정렬합니다. Shorts와 일반 짧은 영상이 함께
-                포함될 수 있습니다.
+                등록한 해시태그의 공식 인기 게시물(top_media)을 조회합니다. 단순
+                문구 일치 검색이 아니라 해당 해시태그 안에서 Instagram이 선정한
+                인기 후보를 가져옵니다. 전체 Instagram을 지표만으로 검색하는
+                API는 사용하지 않습니다.
               </p>
-              {!process.env.YOUTUBE_API_KEY && (
-                <p className="field-note">
-                  Google Cloud에서 YouTube Data API v3를 활성화하고 Vercel 운영
-                  환경에 YOUTUBE_API_KEY를 추가한 뒤 재배포하세요. 키는 채팅이나
-                  메모에 입력하지 마세요.
-                </p>
-              )}
-              <h3>Instagram · 공식 해시태그 API</h3>
+              <h3>2. 후보 선별 · 공개 반응</h3>
               <p>
-                아래 Instagram 연결에서 인증 상태를 확인하세요. 지정한
-                해시태그의 인기 게시물 중 최근 7일·한국어·최소 좋아요 조건을
-                통과한 후보를 저장합니다.
+                최근 7일·한국어·최소 좋아요 조건을 통과한 게시물을 시간당
+                좋아요로 정렬합니다. 댓글 수는 제공될 때 함께 저장합니다. 현재
+                댓글 수와 증가율은 선정 점수에 반영하지 않습니다.
               </p>
-              <h3>TikTok</h3>
               <p>
-                미연결. 전체 인기 피드에 대한 공식 API 접근이 제한되어 현재
-                수집하지 않습니다.
+                현재 해시태그 API에서 얻지 못하는 조회수·공유·저장 수는 추정하지
+                않습니다. 연결한 본인 계정의 인사이트 분석과 타인의 바이럴
+                게시물 발굴은 조회 가능한 데이터가 다릅니다.
               </p>
               <div className="muted-box">
                 개인 추천 피드나 플랫폼 전체 인기 순위를 재현하지 않습니다.

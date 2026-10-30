@@ -7,7 +7,6 @@ import {
   type SourceResult,
   kstDay,
 } from "./model";
-import { collectBluesky, collectYoutube } from "./sources";
 import { instagramConfig, InstagramError } from "./instagram";
 import { instagramSource } from "./instagram-server";
 export async function runCollection(trigger: "cron" | "manual") {
@@ -33,35 +32,27 @@ export async function runCollection(trigger: "cron" | "manual") {
       );
       return { status: "skipped" as const };
     }
-    const sources = [
-      { name: "Bluesky", run: () => collectBluesky(settings, now) },
-      ...(instagramConfig(process.env)
-        ? [{ name: "Instagram", run: () => instagramSource(settings, now) }]
-        : []),
-      ...(process.env.YOUTUBE_API_KEY
-        ? [
+    // Instagram-only pilot: other providers must not run, even if their keys exist.
+    if (!instagramConfig(process.env)) {
+      await query(
+        "update public.collection_runs set status='skipped',finished_at=now(),source_results=$2::jsonb,error='Instagram 인증 연결 대기' where id=$1",
+        [
+          id,
+          JSON.stringify([
             {
-              name: "YouTube",
-              run: () =>
-                collectYoutube(settings, now, process.env.YOUTUBE_API_KEY!),
+              source: "Instagram",
+              status: "unconfigured",
+              found: 0,
+              message: "Meta 인증 정보 연결이 필요합니다.",
             },
-          ]
-        : []),
+          ]),
+        ],
+      );
+      return { status: "skipped" as const };
+    }
+    const sources = [
+      { name: "Instagram", run: () => instagramSource(settings, now) },
     ];
-    if (!process.env.YOUTUBE_API_KEY)
-      results.push({
-        source: "YouTube",
-        status: "unconfigured",
-        found: 0,
-        message: "YouTube Data API 키를 연결하면 수집이 시작됩니다.",
-      });
-    if (!instagramConfig(process.env))
-      results.push({
-        source: "Instagram",
-        status: "unconfigured",
-        found: 0,
-        message: "Meta 인증 정보 연결이 필요합니다.",
-      });
     const batches = await Promise.all(
       sources.map(async (source) => {
         try {
@@ -91,7 +82,7 @@ export async function runCollection(trigger: "cron" | "manual") {
         }
       }),
     );
-    // Alternate providers: view counts and social engagement scores are not comparable.
+    // The pilot collects Instagram only.
     const candidates: Candidate[] = [];
     for (let i = 0; i < Math.max(0, ...batches.map((b) => b.length)); i++)
       for (const batch of batches) if (batch[i]) candidates.push(batch[i]);

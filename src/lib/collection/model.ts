@@ -17,6 +17,12 @@ export const collectionSettingsSchema = z.object({
     .default(100),
   youtube_min_views: z.coerce.number().int().min(100).max(100000000),
 });
+export const instagramSettingsSchema = collectionSettingsSchema.pick({
+  enabled: true,
+  daily_limit: true,
+  instagram_hashtags: true,
+  instagram_min_likes: true,
+});
 export type Settings = z.infer<typeof collectionSettingsSchema>;
 export type Candidate = {
   provider: "bluesky" | "youtube" | "instagram";
