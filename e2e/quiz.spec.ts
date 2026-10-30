@@ -51,6 +51,9 @@ test("mobile demo: home, restore, edit and result", async ({ page }) => {
     path: "artifacts/result-mobile.png",
     fullPage: true,
   });
+  await page.getByRole("link", { name: "나도 테스트하기 →" }).click();
+  await page.getByRole("link", { name: "체험 테스트 시작하기" }).click();
+  await expect(page.getByText("QUESTION 01", { exact: false })).toBeVisible();
   expect(errors).toEqual([]);
 });
 test("unpublished quiz denied, admin setup, API rejects and desktop layout", async ({

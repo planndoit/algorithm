@@ -51,6 +51,8 @@ export default function QuizPlayer({ quiz }: { quiz: Quiz }) {
       if (quiz.id === "demo") {
         const id = `demo-${requestId}`;
         localStorage.setItem(id, JSON.stringify({ answers: next }));
+        localStorage.removeItem(key);
+        localStorage.removeItem(`${key}:request`);
         router.push(`/result/${id}`);
         return;
       }
@@ -62,6 +64,7 @@ export default function QuizPlayer({ quiz }: { quiz: Quiz }) {
       const data = await res.json();
       if (!res.ok) throw Error(data.error || "저장하지 못했어요.");
       localStorage.removeItem(key);
+      localStorage.removeItem(`${key}:request`);
       router.push(`/result/${data.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "다시 시도해 주세요.");
